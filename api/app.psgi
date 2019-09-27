@@ -121,6 +121,57 @@ get '/api/macs' => sub {
     );
 };
 
+get '/api/cubism_values' => sub {
+    my ($c) = @_;
+
+    my $start_timestamp = $c->param('start');
+    my $stop_timestamp = $c->param('stop');
+    my $step_seconds = $c->param('step');
+    my $name = $c->param('name');
+
+    my ($mac, $what) = split(/_/, $name);
+
+    my %allowed = (
+        t => 1,
+        h => 1,
+    );
+
+    die 'incorrect name' if not $allowed{$what // ''};
+
+    my $sth = get_dbh()->prepare("select timestamp, $what from dots where timestamp >= ? and timestamp <= ? and mac = ? order by timestamp");
+    $sth->execute(
+        $start_timestamp,
+        $stop_timestamp,
+        $mac,
+    );
+
+    my @db_values;
+
+    while (my $row = $sth->fetch()) {
+		push @db_values, {
+            timestamp => $row->[0],
+            value => $row->[1],
+        };
+	}
+
+    my $val = 0;
+    my $db_element = shift @db_values;
+
+    my @values;
+    for (my $cursor_timestamp = $start_timestamp; $cursor_timestamp <= $stop_timestamp; $cursor_timestamp += $step_seconds) {
+        if (defined($db_element) && $db_element->{timestamp} >= $cursor_timestamp) {
+            $val = $db_element->{value};
+            $db_element = shift @db_values;
+        }
+
+        push @values, $val;
+    }
+
+    $c->render(
+        json => \@values,
+    );
+};
+
 if (!-e '/data_db/db.db') {
 	create_db();
 }

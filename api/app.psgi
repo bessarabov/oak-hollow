@@ -3,6 +3,7 @@ use utf8;
 use strict;
 use warnings FATAL => 'all';
 
+use DBI;
 use Moment;
 use JSON::PP;
 use Path::Tiny;
@@ -20,6 +21,36 @@ sub to_oneline_json {
 	my $json = $json_coder->encode($data);
 
 	return $json;
+}
+
+sub get_dbh {
+
+   my $dbh = DBI->connect(
+       "dbi:SQLite:dbname=/data_db/db.db",
+       '',
+       '',
+       {
+           RaiseError     => 1,
+           sqlite_unicode => 1,
+       },
+   );
+
+   return $dbh;
+}
+
+sub create_db {
+	my @sqls = (
+		'CREATE TABLE dots(timestamp INTEGER, mac TEXT, t REAL, h REAL);',
+	);
+
+    my $dbh = get_dbh();
+
+    my $sth;
+
+    foreach my $sql (@sqls) {
+        $sth = $dbh->prepare($sql);
+        $sth->execute();
+    }
 }
 
 get '/api/alive' => sub {
@@ -56,10 +87,42 @@ post '/api/dot' => sub {
         to_oneline_json($parsed_body) . "\n",
     );
 
+    my $sth = get_dbh()->prepare(
+        'insert into dots (timestamp, mac, t, h) values (?, ?, ?, ?)',
+    );
+
+	$sth->execute(
+		$parsed_body->{timestamp},
+		$parsed_body->{mac},
+		$parsed_body->{t},
+		$parsed_body->{h},
+	);
+
     $c->render(
         json => {
         },
     );
 };
+
+get '/api/macs' => sub {
+    my ($c) = @_;
+
+	my @macs;
+
+    my $sth = get_dbh()->prepare('select distinct mac from dots order by mac');
+    $sth->execute();
+
+    while (my $row = $sth->fetch()) {
+		push @macs, $row->[0];
+	}
+
+    $c->render(
+        json => \@macs,
+    );
+};
+
+if (!-e '/data_db/db.db') {
+	create_db();
+}
 
 app->start;

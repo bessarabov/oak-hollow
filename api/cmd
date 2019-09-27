@@ -1,0 +1,1 @@
+carton exec starman --port 80 --host 0.0.0.0 --workers 10 --Reload lib/ --Reload app.psgi app.psgi

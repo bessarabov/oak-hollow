@@ -57,7 +57,7 @@ d3.json("/api/macs", function(json) {
 		  .enter()
 		  .append("div")
 		  .attr("class", "horizon")
-		  .call(horizon);
+		  .call(horizon.extent([0, 100]));
 
 	d3.select("#body").append("div")
 	  .attr("class", "rule")

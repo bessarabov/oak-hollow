@@ -59,13 +59,6 @@ d3.json("/api/macs", function(json) {
 		  .attr("class", "horizon")
 		  .call(horizon);
 
-	d3.select("#graph").selectAll(".horizon")
-		  .data(metrics)
-		  .enter()
-		  .append("div")
-		  .attr("class", "horizon")
-		  .call(horizon);
-
 	d3.select("#body").append("div")
 	  .attr("class", "rule")
 	  .call(context.rule());

@@ -42,6 +42,8 @@ var metrics = [];
 d3.json("/api/macs", function(json) {
 	json.forEach(function(el) {
 		metrics.push(el + "_t");
+	});
+	json.forEach(function(el) {
 		metrics.push(el + "_h");
 	});
 

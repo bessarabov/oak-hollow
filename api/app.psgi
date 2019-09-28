@@ -172,6 +172,27 @@ get '/api/cubism_values' => sub {
     );
 };
 
+get '/api/latest' => sub {
+    my ($c) = @_;
+
+    my $sth = get_dbh()->prepare("select t1.mac, t1.timestamp, t, h from dots t1 join (select mac, max(timestamp) as timestamp from dots group by mac) t2 on t1.mac = t2.mac and t1.timestamp = t2.timestamp");
+    $sth->execute();
+
+    my %latest;
+
+    while (my $row = $sth->fetch()) {
+        $latest{$row->[0]} = {
+            timestamp => $row->[1],
+            t => $row->[2],
+            h => $row->[3],
+        };
+	}
+
+    $c->render(
+        json => \%latest,
+    );
+};
+
 if (!-e '/data_db/db.db') {
 	create_db();
 }

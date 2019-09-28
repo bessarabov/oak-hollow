@@ -50,6 +50,7 @@ d3.json("/api/macs", function(json) {
 	});
 
 	horizon.metric(get_values);
+    horizon.format(d3.format(".4s"));
 
 	d3.select("#graph").selectAll(".horizon")
 		  .data(metrics)
